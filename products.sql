@@ -57,3 +57,4 @@ INSERT INTO `bamazon`.`products`
 (`product_name`,`department_name`,`price`,`stock_quantity`)
 values('Bose noise cancelling wireless headphones', 'electronics', 299.99, 3);
 
+select * from products;
