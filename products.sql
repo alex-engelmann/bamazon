@@ -1,4 +1,3 @@
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'penbed29';
 
 DROP DATABASE IF EXISTS bamazon;
 CREATE DATABASE bamazon;

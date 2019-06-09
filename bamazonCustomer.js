@@ -1,6 +1,8 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 
+var Table = require('easy-table');
+
 var dotenv = require("dotenv").config();
 var keys = require("./keys");
 
@@ -18,33 +20,70 @@ var connection = mysql.createConnection({
 // connect to the mysql server and sql database
 connection.connect(function (err) {
     if (err) throw err;
-    // run the start function after the connection is made to prompt the user
 
-    start();
+    displayAllProducts();
 });
 
-// function which prompts the user for what action they should take
-function start() {
+let displayAllProducts = function () {
+
+    //select all the products and display them in a table
     connection.query("SELECT * FROM products", function (err, res) {
         if (err) throw err;
-        // Log all results of the SELECT statement
-        console.log(res);
-    })
-    inquirer
-        .prompt({
-            name: "productlist",
-            type: "list",
-            message: "Would you like to [BUY] or [EXIT]",
-            choices: ["BUY", "EXIT"]
+        let t = new Table;
+
+        res.forEach(function (product) {
+            t.cell('Product Id', product.item_id)
+            t.cell('Product Name', product.product_name)
+            t.cell('Department Name', product.department_name)
+            t.cell('Price', product.price, Table.number(2))
+            t.cell('Quantity in stock', product.stock_quantity)
+            t.newRow()
         })
-        .then(function (answer) {
-            // based on their answer, either call the buy or exit functions
-            if (answer.productlist === "BUY") {
-                console.log("You wanted to buy something!");
-                connection.end();
-            }
-            else if (answer.productlist === "EXIT") {
-                connection.end();
-            }
-        });
+        console.log(t.toString())
+        queryUser();
+        
+    })
 }
+
+
+//gets the information from the user
+function queryUser() {
+    inquirer
+        .prompt([
+            {
+                name: "getID",
+                type: "input",
+                message: "Enter the ID of the item you'd like to purchase",
+            },
+            {
+                name: "getQuantity",
+                type: "input",
+                message: "Enter the quantity you'd like"
+            }]
+        )
+        .then(function (answers) {
+                connection.query("SELECT * FROM products WHERE item_id = ?", VALUES = answers.getID, function (err, res) {
+                    if (err) {
+                        console.log("Something went wrong");
+                        throw err;
+                    }
+                    //check for insufficient stock
+                    if (res[0].stock_quantity - answers.getQuantity < 0) {
+                        console.log("Insufficient inventory!");
+                        connection.end();
+                    }
+                    //update the inventory and give the customer a price
+                    else {
+                        connection.query("UPDATE products SET ? WHERE ?",
+                            [
+                                { stock_quantity: res[0].stock_quantity - answers.getQuantity },
+                                { item_id: answers.getID }
+                            ]
+                        )
+
+                        console.log("Your total today is $ "
+                            + answers.getQuantity * res[0].price + ". \n Thanks for shopping at Bamazon ");
+                        connection.end();
+                    };
+                })})}
+            
